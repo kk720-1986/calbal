@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="カロリー収支">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>カロリー収支</title>
+<style>
+:root{--bg:#f6f7f5;--card:#fff;--ink:#1c2321;--sub:#5f6b67;--line:#e3e7e4;--accent:#0f766e;--accent-ink:#fff;--minus:#0f766e;--plus:#c2410c;--warn:#b45309;--field:#f1f3f1;--pred:#7c3aed}
+@media (prefers-color-scheme:dark){:root{--bg:#111514;--card:#1a1f1e;--ink:#e8ecea;--sub:#9aa6a2;--line:#2a312f;--accent:#2dd4bf;--accent-ink:#06201d;--minus:#2dd4bf;--plus:#fb923c;--warn:#fbbf24;--field:#232a28;--pred:#a78bfa}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;font-size:16px;-webkit-text-size-adjust:100%}
+body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(env(safe-area-inset-top) + 8px) 16px 8px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+header h1{font-size:15px;margin:0;color:var(--sub);font-weight:600;flex:1}
+main{max-width:560px;margin:0 auto;padding:12px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2{font-size:13px;color:var(--sub);margin:0 0 8px;font-weight:600;letter-spacing:.02em}
+.datebar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.datebar .d{font-size:20px;font-weight:700}
+button{font:inherit;color:inherit;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
+button.ghost{background:transparent}
+button.icon{width:44px;height:44px;padding:0;font-size:22px}
+button.danger{color:var(--plus)}
+input[type=number],input[type=text],textarea{font:inherit;color:inherit;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%;min-width:0}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent);margin:0}
+.row{display:flex;align-items:center;gap:8px;padding:7px 0}
+.row+.row{border-top:1px solid var(--line)}
+.row .grow{flex:1;min-width:0}
+.num{width:92px!important;flex:none;text-align:right}
+.unit{color:var(--sub);font-size:13px;width:30px;flex:none}
+.big{font-size:40px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15}
+.big small{font-size:16px;font-weight:600}
+.minus{color:var(--minus)}.plus{color:var(--plus)}.muted{color:var(--sub)}
+.sub{color:var(--sub);font-size:13px;line-height:1.6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.stat{background:var(--field);border-radius:10px;padding:8px 10px}
+.stat b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font-size:13px;padding:6px 10px;border-radius:999px}
+.tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:6}
+.tabbar button{flex:1;border:0;border-radius:0;background:transparent;padding:13px 0;font-size:14px;color:var(--sub)}
+.tabbar button.on{color:var(--accent);font-weight:700}
+.item{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.item:first-child{border-top:0}
+.item .r{text-align:right;font-variant-numeric:tabular-nums}
+.tag{font-size:11px;color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:0 4px;margin-left:4px;white-space:nowrap}
+.kv{display:flex;justify-content:space-between;padding:4px 0;font-variant-numeric:tabular-nums}
+code{display:block;background:var(--field);border-radius:8px;padding:8px;font-size:12px;overflow-wrap:anywhere}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:10}
+#toast.show{opacity:1}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);width:min(92vw,480px);padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h3{margin:0 0 8px;font-size:16px}
+svg text{fill:var(--sub);font-size:10px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.legend span::before{content:"";display:inline-block;width:14px;height:3px;margin-right:4px;vertical-align:middle;background:currentColor}
+</style>
+</head>
+<body>
+<header><h1>カロリー収支</h1><button class="ghost" id="btnImport">📋 取り込み</button></header>
+<main>
+<section id="v-today">
+  <div class="datebar">
+    <button class="icon" id="prev" aria-label="前の日">‹</button>
+    <div style="text-align:center"><div class="d" id="dLabel"></div><button class="ghost chip" id="toToday">今日へ</button></div>
+    <button class="icon" id="next" aria-label="次の日">›</button>
+  </div>
+  <div class="card" id="summary"></div>
+  <div class="card"><h2>消費</h2>
+    <div class="row"><label class="grow" for="rest">安静時消費</label><input class="num" id="rest" type="number" inputmode="numeric"><span class="unit">kcal</span></div>
+    <div class="row"><label class="grow" for="active">アクティブ</label><input class="num" id="active" type="number" inputmode="numeric"><span class="unit">kcal</span></div>
+  </div>
+  <div class="card"><h2>摂取（型）</h2><div id="meals"></div></div>
+  <div class="card"><h2>追加の摂取</h2>
+    <div id="extras"></div>
+    <div class="row"><input class="grow" id="exName" type="text" placeholder="例：チョコ"><input class="num" id="exKcal" type="number" inputmode="numeric" placeholder="kcal" style="width:76px!important"><button class="primary" id="exAdd">追加</button></div>
+    <div class="chips" id="recent"></div>
+  </div>
+  <div class="card"><h2>体重（任意）</h2>
+    <div class="row"><label class="grow" for="weight">体重</label><input class="num" id="weight" type="number" inputmode="decimal" step="0.1"><span class="unit">kg</span></div>
+  </div>
+</section>
+
+<section id="v-history" hidden>
+  <div class="card"><h2>体重の推移（直近60日）</h2><div id="chart"></div>
+    <div class="legend sub"><span style="color:var(--sub)">実測</span><span style="color:var(--accent)">7日平均</span><span style="color:var(--pred)">収支からの予測</span></div>
+  </div>
+  <div class="card"><h2>答え合わせ（補正係数の推定）</h2><div id="calib"></div></div>
+  <div class="card"><h2>記録</h2><div id="daylist"></div></div>
+</section>
+
+<section id="v-settings" hidden>
+  <div class="card"><h2>食事の型</h2>
+    <div id="tplList"></div>
+    <div class="row"><button id="tplAdd">＋ 型を追加</button></div>
+    <p class="sub">チェックは「その型を毎日食べる前提か」の既定値です。型の変更は今日以降の記録に反映され、過去の記録はそのまま残ります。</p>
+  </div>
+  <div class="card"><h2>計算の設定</h2>
+    <div class="row"><label class="grow" for="kpk">体重1kgあたり</label><input class="num" id="kpk" type="number" inputmode="numeric"><span class="unit">kcal</span></div>
+    <div class="row"><label class="grow" for="restDef">安静時消費の既定値<br><span class="sub">未入力の日に使う（空欄なら使わない）</span></label><input class="num" id="restDef" type="number" inputmode="numeric"><span class="unit">kcal</span></div>
+    <div class="row"><label class="grow" for="factor">補正係数<br><span class="sub">消費の合計にかける</span></label><input class="num" id="factor" type="number" inputmode="decimal" step="0.01"><span class="unit"></span></div>
+    <div class="row"><label class="grow" for="useFactor">補正係数を使う</label><input id="useFactor" type="checkbox"></div>
+  </div>
+  <div class="card"><h2>データ</h2>
+    <p class="sub">データはこの端末の中だけに保存されます。ときどき書き出してバックアップしてください。</p>
+    <div class="chips"><button id="exp">書き出し</button><button id="impFileBtn">ファイルから復元</button><button id="pasteBtn">テキストで取り込み</button><button class="danger" id="wipe">全データ削除</button></div>
+    <input id="impFile" type="file" accept="application/json,.json" hidden>
+  </div>
+  <div class="card"><h2>取り込みの形式</h2>
+    <p class="sub">ショートカットで次のようなテキストをコピーしてから「📋 取り込み」を押すと、その日の記録に入ります。項目は一部だけでも構いません。</p>
+    <code>CALBAL date=2026-09-27 rest=1620 active=480 weight=60.0</code>
+    <p class="sub">date には today / yesterday も使えます。省略すると、表示中の日付に入ります。</p>
+  </div>
+</section>
+</main>
+
+<nav class="tabbar"><button data-v="today" class="on">記録する</button><button data-v="history">推移</button><button data-v="settings">設定</button></nav>
+<div id="toast" role="status"></div>
+<dialog id="pasteDlg">
+  <h3>テキストを貼り付けて取り込み</h3>
+  <p class="sub">ショートカットがコピーしたテキストを長押しで貼り付けてください。</p>
+  <textarea id="pasteText" rows="4"></textarea>
+  <div class="row" style="justify-content:flex-end"><button id="pasteCancel">キャンセル</button><button class="primary" id="pasteOk">取り込む</button></div>
+</dialog>
+
+<script>
+'use strict';
+const KEY='calbal.v1';
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseYmd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(s,n)=>{const d=parseYmd(s);d.setDate(d.getDate()+n);return ymd(d)};
+const diffDays=(a,b)=>Math.round((parseYmd(b)-parseYmd(a))/864e5);
+const today=()=>ymd(new Date());
+const isNum=v=>typeof v==='number'&&isFinite(v);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=v=>Math.round(v).toLocaleString('ja-JP');
+const sign=(v,dec=0)=>{const a=Math.abs(v);const r=dec?a.toFixed(dec):Math.round(a).toLocaleString('ja-JP');return(v>0.00001?'+':v<-0.00001?'−':'±')+r};
+const label=s=>{const d=parseYmd(s);return`${d.getMonth()+1}/${d.getDate()}(${'日月火水木金土'[d.getDay()]})`};
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+function defaults(){return{version:1,settings:{templates:[
+  {id:uid(),name:'朝食',kcal:400,on:true},{id:uid(),name:'昼食',kcal:700,on:true},{id:uid(),name:'夕食',kcal:700,on:true}],
+  kcalPerKg:7200,restDefault:null,factor:1,useFactor:false},days:{}}}
+function migrate(o){const d=defaults();if(!o||typeof o!=='object')return d;
+  o.settings=Object.assign(d.settings,o.settings||{});if(!Array.isArray(o.settings.templates))o.settings.templates=d.settings.templates;
+  if(!o.days||typeof o.days!=='object')o.days={};o.version=1;return o}
+function load(){try{const r=localStorage.getItem(KEY);if(r)return migrate(JSON.parse(r))}catch(e){}return defaults()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('保存できませんでした')}}
+let S=load();
+let cur=today();
+if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{})}
+
+// ---- 計算 ----
+const snapshot=()=>S.settings.templates.map(t=>({tid:t.id,name:t.name,kcal:+t.kcal||0,on:!!t.on}));
+function ensureDay(d){if(!S.days[d])S.days[d]={meals:snapshot(),extras:[]};return S.days[d]}
+function meals(day){return day&&day.meals?day.meals:snapshot()}
+function intake(day){let s=0;for(const m of meals(day))if(m.on)s+=+m.kcal||0;for(const x of(day&&day.extras)||[])s+=+x.kcal||0;return s}
+function restOf(day){if(!day)return null;if(isNum(day.rest))return day.rest;return isNum(S.settings.restDefault)?S.settings.restDefault:null}
+function expenditure(day,apply){if(!day)return null;const r=restOf(day);if(r==null||!isNum(day.active))return null;let e=r+day.active;if(apply&&S.settings.useFactor&&isNum(S.settings.factor))e*=S.settings.factor;return e}
+function balance(day,apply=true){const e=expenditure(day,apply);return e==null?null:intake(day)-e}
+function weightMA(d){let s=0,n=0;for(let i=0;i<7;i++){const x=S.days[addDays(d,-i)];if(x&&isNum(x.weight)){s+=x.weight;n++}}return n>=3?s/n:null}
+function calibrate(win=28){
+  let end=null;for(let i=0;i<7;i++){const d=addDays(today(),-i);if(weightMA(d)!=null){end=d;break}}
+  if(!end)return{ok:false,reason:'直近の体重記録が足りません（7日のうち3回以上の記録が必要です）。'};
+  let start=null;for(let s=win;s>=14;s--){const d=addDays(end,-s);if(weightMA(d)!=null){start=d;break}}
+  if(!start)return{ok:false,reason:'比較できる過去の体重記録がまだありません（2週間以上前の体重が必要です）。'};
+  const span=diffDays(start,end);let I=0,E=0,n=0;
+  for(let i=1;i<=span;i++){const day=S.days[addDays(start,i)];const e=expenditure(day,false);if(e==null)continue;I+=intake(day);E+=e;n++}
+  if(n<Math.max(10,Math.ceil(span*.7)))return{ok:false,reason:`この期間（${span}日）のうち、消費がそろった日が${n}日しかありません。`};
+  const dW=weightMA(end)-weightMA(start),Im=I/n,Em=E/n,T=Im-dW*S.settings.kcalPerKg/span;
+  return{ok:true,start,end,span,n,dW,Im,Em,T,f:T/Em};
+}
+
+// ---- 取り込み ----
+function parseImport(text){
+  const out={};const t=String(text);
+  const dm=t.match(/\bdate\s*[=:]\s*(today|yesterday|\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2})/i);
+  if(dm){const v=dm[1].toLowerCase();
+    if(v==='today')out.date=today();else if(v==='yesterday')out.date=addDays(today(),-1);
+    else{const[y,m,d]=v.split(/[-\/.]/).map(Number);out.date=`${y}-${pad(m)}-${pad(d)}`}}
+  for(const k of['rest','active','weight']){const m=t.match(new RegExp('\\b'+k+'\\s*[=:]\\s*([\\d,]*\\.?\\d+)','i'));
+    if(m){const v=parseFloat(m[1].replace(/,/g,''));if(isFinite(v))out[k]=k==='weight'?Math.round(v*10)/10:Math.round(v)}}
+  return out;
+}
+function applyImport(o){
+  const has=['rest','active','weight'].filter(k=>k in o);
+  if(!has.length){toast('取り込める数値が見つかりませんでした');return false}
+  const d=o.date||cur;const day=ensureDay(d);has.forEach(k=>day[k]=o[k]);save();
+  cur=d;show('today');renderAll();
+  const names={rest:'安静時',active:'アクティブ',weight:'体重'};
+  toast(`${label(d)} に取り込みました：`+has.map(k=>`${names[k]} ${o[k]}`).join(' / '));return true;
+}
+async function importFromClipboard(){
+  try{if(navigator.clipboard&&navigator.clipboard.readText){const t=await navigator.clipboard.readText();
+    if(t&&/(rest|active|weight)\s*[=:]/i.test(t)){applyImport(parseImport(t));return}}}catch(e){}
+  $('pasteText').value='';$('pasteDlg').showModal();
+}
+
+// ---- 描画 ----
+let toastTimer;
+function toast(m){const el=$('toast');el.textContent=m;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3200)}
+function show(v){for(const s of['today','history','settings'])$('v-'+s).hidden=s!==v;
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  if(v==='history')renderHistory();if(v==='settings')renderSettings();window.scrollTo(0,0)}
+
+function renderToday(){
+  $('dLabel').textContent=label(cur)+(cur===today()?' 今日':'');
+  $('toToday').style.visibility=cur===today()?'hidden':'visible';
+  $('next').disabled=cur>=today();
+  const day=S.days[cur];
+  $('rest').value=day&&isNum(day.rest)?day.rest:'';
+  $('rest').placeholder=isNum(S.settings.restDefault)?`既定 ${S.settings.restDefault}`:'';
+  $('active').value=day&&isNum(day.active)?day.active:'';
+  $('weight').value=day&&isNum(day.weight)?day.weight:'';
+  $('meals').innerHTML=meals(day).map((m,i)=>`<div class="row"><input type="checkbox" data-mi="${i}" ${m.on?'checked':''} id="m${i}"><label class="grow" for="m${i}">${esc(m.name)}</label><input class="num" type="number" inputmode="numeric" data-mk="${i}" value="${m.kcal}"><span class="unit">kcal</span></div>`).join('')||'<p class="sub">設定で食事の型を登録できます。</p>';
+  const ex=(day&&day.extras)||[];
+  $('extras').innerHTML=ex.map((x,i)=>`<div class="row"><span class="grow">${esc(x.name||'（名前なし）')}</span><span class="r">${fmt(x.kcal)} kcal</span><button class="ghost chip" data-xd="${i}" aria-label="削除">✕</button></div>`).join('');
+  renderRecent();renderSummary();
+}
+function renderSummary(){
+  const day=S.days[cur],I=intake(day),E=expenditure(day,true);
+  const usedDef=day&&!isNum(day.rest)&&isNum(S.settings.restDefault)&&E!=null;
+  let h='<h2>この日の収支</h2>';
+  if(E==null)h+=`<div class="big muted">—</div><div class="sub">安静時とアクティブを入力すると収支が出ます</div>`;
+  else{const b=I-E;h+=`<div class="big ${b<0?'minus':'plus'}">${sign(b)} <small>kcal</small></div><div class="sub">${b<0?'消費が摂取を上回っています':'摂取が消費を上回っています'}${S.settings.useFactor?`（補正×${(+S.settings.factor).toFixed(2)}）`:''}${usedDef?'<span class="tag">安静時は既定値</span>':''}</div>`}
+  h+=`<div class="grid2"><div class="stat"><span class="sub">摂取</span><b>${fmt(I)}</b></div><div class="stat"><span class="sub">消費</span><b>${E==null?'—':fmt(E)}</b></div></div>`;
+  let s=0,n=0;for(let i=0;i<7;i++){const b=balance(S.days[addDays(cur,-i)]);if(b!=null){s+=b;n++}}
+  if(n)h+=`<div class="sub" style="margin-top:10px">直近7日（記録${n}日）の合計 <b class="${s<0?'minus':'plus'}">${sign(s)} kcal</b>　体重換算 ${sign(s/S.settings.kcalPerKg,2)} kg</div>`;
+  $('summary').innerHTML=h;
+}
+function renderRecent(){
+  const cnt=new Map();
+  for(let i=0;i<60;i++){const d=S.days[addDays(today(),-i)];if(!d||!d.extras)continue;
+    for(const x of d.extras){if(!x.name)continue;const k=x.name+'\u0000'+x.kcal;cnt.set(k,(cnt.get(k)||0)+1)}}
+  const top=[...cnt.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  $('recent').innerHTML=top.map(([k])=>{const[n,kc]=k.split('\u0000');return`<button class="chip" data-rn="${esc(n)}" data-rk="${kc}">＋${esc(n)} ${kc}</button>`}).join('');
+}
+
+function renderHistory(){renderChart();renderCalib();renderList()}
+function renderChart(){
+  const N=60,end=today(),dates=Array.from({length:N},(_,i)=>addDays(end,i-N+1));
+  const W=[],M=[],P=[];let anchor=null,cum=0;
+  dates.forEach((d,i)=>{const day=S.days[d];if(day&&isNum(day.weight))W.push([i,day.weight]);const m=weightMA(d);if(m!=null)M.push([i,m]);
+    if(anchor==null){if(m!=null){anchor=m;P.push([i,m])}}else{const b=balance(day);if(b!=null)cum+=b;P.push([i,anchor+cum/S.settings.kcalPerKg])}});
+  if(!W.length){$('chart').innerHTML='<p class="sub">体重を記録すると、実測と「収支からの予測」がここに並びます。</p>';return}
+  const ys=[...W,...M,...P].map(p=>p[1]);let lo=Math.min(...ys),hi=Math.max(...ys);
+  if(hi-lo<1){const c=(hi+lo)/2;lo=c-.5;hi=c+.5}const pd=(hi-lo)*.08;lo-=pd;hi+=pd;
+  const w=340,h=190,l=36,r=8,t=8,b=22,x=i=>l+(w-l-r)*i/(N-1),y=v=>t+(h-t-b)*(hi-v)/(hi-lo);
+  const line=(pts,st)=>pts.length>1?`<polyline fill="none" style="stroke:${st}" stroke-width="2" stroke-linejoin="round" points="${pts.map(p=>x(p[0]).toFixed(1)+','+y(p[1]).toFixed(1)).join(' ')}"/>`:'';
+  let g='';for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4;g+=`<line x1="${l}" x2="${w-r}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--line)"/><text x="${l-4}" y="${y(v)+3}" text-anchor="end">${v.toFixed(1)}</text>`}
+  [0,Math.floor(N/2),N-1].forEach(i=>{const d=parseYmd(dates[i]);g+=`<text x="${x(i)}" y="${h-6}" text-anchor="${i===0?'start':i===N-1?'end':'middle'}">${d.getMonth()+1}/${d.getDate()}</text>`});
+  const dots=W.map(p=>`<circle cx="${x(p[0])}" cy="${y(p[1])}" r="2.2" style="fill:var(--sub)" opacity=".6"/>`).join('');
+  $('chart').innerHTML=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="体重の推移">${g}${dots}${line(M,'var(--accent)')}<g stroke-dasharray="5 4">${line(P,'var(--pred)')}</g></svg>`;
+}
+function renderCalib(){
+  const c=calibrate();
+  if(!c.ok){$('calib').innerHTML=`<p class="sub">${c.reason}</p><p class="sub">体重（週3回以上）と消費の記録が2〜4週間たまると、「記録上の消費」と「体重の変化から逆算した実際の消費」を比べて補正係数を出します。</p>`;return}
+  const warn=c.f<.75||c.f>1.25;
+  $('calib').innerHTML=`<p class="sub">${label(c.start)}〜${label(c.end)}（${c.span}日、うち記録${c.n}日）</p>
+  <div class="kv"><span>体重の変化（7日平均）</span><b>${sign(c.dW,2)} kg</b></div>
+  <div class="kv"><span>平均摂取</span><b>${fmt(c.Im)} kcal</b></div>
+  <div class="kv"><span>記録上の平均消費</span><b>${fmt(c.Em)} kcal</b></div>
+  <div class="kv"><span>体重から逆算した実際の消費</span><b>${fmt(c.T)} kcal</b></div>
+  <div class="kv"><span>補正係数</span><b style="font-size:20px">×${c.f.toFixed(2)}</b></div>
+  ${warn?'<p class="sub"><span class="tag">ずれが大きめ</span> 型のkcal見積もりや、追加摂取の記録漏れも確認してみてください。</p>':''}
+  <p class="sub">補正係数は摂取の見積もり誤差もまとめて吸収します。</p>
+  <div class="row"><button class="primary" id="applyF">この係数を使う</button></div>`;
+  $('applyF').onclick=()=>{S.settings.factor=Math.round(c.f*100)/100;S.settings.useFactor=true;save();renderHistory();toast(`補正係数 ×${S.settings.factor.toFixed(2)} を適用しました`)};
+}
+function renderList(){
+  const ds=Object.keys(S.days).sort().reverse();
+  $('daylist').innerHTML=ds.length?ds.map(d=>{const day=S.days[d],b=balance(day),E=expenditure(day,true);
+    return`<div class="item" data-go="${d}"><div><div>${label(d)}</div><div class="sub">摂取 ${fmt(intake(day))} / 消費 ${E==null?'—':fmt(E)}${isNum(day.weight)?` / ${day.weight}kg`:''}</div></div><div class="r ${b==null?'muted':b<0?'minus':'plus'}"><b>${b==null?'—':sign(b)}</b></div></div>`}).join(''):'<p class="sub">まだ記録がありません。</p>';
+}
+
+function renderSettings(){
+  $('tplList').innerHTML=S.settings.templates.map((t,i)=>`<div class="row"><input type="checkbox" data-to="${i}" ${t.on?'checked':''} aria-label="既定でオン"><input class="grow" type="text" data-tn="${i}" value="${esc(t.name)}"><input class="num" type="number" inputmode="numeric" data-tk="${i}" value="${t.kcal}" style="width:76px!important"><button class="ghost chip" data-td="${i}" aria-label="削除">✕</button></div>`).join('');
+  $('kpk').value=S.settings.kcalPerKg;
+  $('restDef').value=isNum(S.settings.restDefault)?S.settings.restDefault:'';
+  $('factor').value=S.settings.factor;
+  $('useFactor').checked=!!S.settings.useFactor;
+}
+function syncFuture(){const t0=today();
+  for(const d of Object.keys(S.days)){if(d<t0)continue;const day=S.days[d],old=day.meals||[];
+    day.meals=S.settings.templates.map(t=>{const o=old.find(m=>m.tid===t.id);return{tid:t.id,name:t.name,kcal:+t.kcal||0,on:o?o.on:!!t.on}})}}
+function renderAll(){renderToday();if(!$('v-history').hidden)renderHistory();if(!$('v-settings').hidden)renderSettings()}
+
+// ---- イベント ----
+const numOrNull=v=>{const n=parseFloat(v);return isFinite(n)?n:null};
+$('prev').onclick=()=>{cur=addDays(cur,-1);renderToday()};
+$('next').onclick=()=>{if(cur<today()){cur=addDays(cur,1);renderToday()}};
+$('toToday').onclick=()=>{cur=today();renderToday()};
+for(const k of['rest','active','weight'])$(k).addEventListener('input',e=>{const v=numOrNull(e.target.value);const day=ensureDay(cur);
+  if(v==null)delete day[k];else day[k]=k==='weight'?Math.round(v*10)/10:Math.round(v);save();renderSummary()});
+$('meals').addEventListener('change',e=>{const i=e.target.dataset.mi;if(i==null)return;const day=ensureDay(cur);day.meals[i].on=e.target.checked;save();renderSummary()});
+$('meals').addEventListener('input',e=>{const i=e.target.dataset.mk;if(i==null)return;const day=ensureDay(cur);day.meals[i].kcal=numOrNull(e.target.value)||0;save();renderSummary()});
+function addExtra(name,kcal){if(!isNum(kcal)){toast('kcalを入力してください');return}ensureDay(cur).extras.push({name:name.trim(),kcal:Math.round(kcal)});save();renderToday()}
+$('exAdd').onclick=()=>{addExtra($('exName').value,numOrNull($('exKcal').value));if(isNum(numOrNull($('exKcal').value))){$('exName').value='';$('exKcal').value=''}};
+$('exKcal').addEventListener('keydown',e=>{if(e.key==='Enter')$('exAdd').click()});
+$('extras').addEventListener('click',e=>{const i=e.target.dataset.xd;if(i==null)return;S.days[cur].extras.splice(+i,1);save();renderToday()});
+$('recent').addEventListener('click',e=>{const b=e.target.closest('[data-rn]');if(!b)return;addExtra(b.dataset.rn,+b.dataset.rk);toast(`${b.dataset.rn} を追加しました`)});
+document.querySelector('.tabbar').addEventListener('click',e=>{const v=e.target.dataset.v;if(v)show(v)});
+$('daylist').addEventListener('click',e=>{const it=e.target.closest('[data-go]');if(!it)return;cur=it.dataset.go;renderToday();show('today')});
+$('btnImport').onclick=importFromClipboard;
+$('pasteBtn').onclick=()=>{$('pasteText').value='';$('pasteDlg').showModal()};
+$('pasteCancel').onclick=()=>$('pasteDlg').close();
+$('pasteOk').onclick=()=>{if(applyImport(parseImport($('pasteText').value)))$('pasteDlg').close()};
+// 設定
+$('tplList').addEventListener('input',e=>{const d=e.target.dataset,T=S.settings.templates;
+  if(d.tn!=null)T[d.tn].name=e.target.value;else if(d.tk!=null)T[d.tk].kcal=numOrNull(e.target.value)||0;else return;syncFuture();save();renderToday()});
+$('tplList').addEventListener('change',e=>{const d=e.target.dataset;if(d.to==null)return;S.settings.templates[d.to].on=e.target.checked;syncFuture();save();renderToday()});
+$('tplList').addEventListener('click',e=>{const i=e.target.dataset.td;if(i==null)return;const t=S.settings.templates[i];
+  if(!confirm(`「${t.name}」を削除しますか？（過去の記録は残ります）`))return;S.settings.templates.splice(+i,1);syncFuture();save();renderSettings();renderToday()});
+$('tplAdd').onclick=()=>{S.settings.templates.push({id:uid(),name:'間食',kcal:200,on:false});syncFuture();save();renderSettings();renderToday()};
+$('kpk').addEventListener('input',e=>{const v=numOrNull(e.target.value);if(v&&v>0){S.settings.kcalPerKg=v;save();renderToday()}});
+$('restDef').addEventListener('input',e=>{const v=numOrNull(e.target.value);S.settings.restDefault=v==null?null:Math.round(v);save();renderToday()});
+$('factor').addEventListener('input',e=>{const v=numOrNull(e.target.value);if(v&&v>0){S.settings.factor=v;save();renderToday()}});
+$('useFactor').addEventListener('change',e=>{S.settings.useFactor=e.target.checked;save();renderToday()});
+$('exp').onclick=()=>{const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=`calbal-${today()}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)};
+$('impFileBtn').onclick=()=>$('impFile').click();
+$('impFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
+  try{const o=JSON.parse(await f.text());if(!o.days||!o.settings)throw 0;
+    if(!confirm('現在のデータを、このファイルの内容で置き換えますか？'))return;S=migrate(o);save();renderAll();renderSettings();toast('復元しました')}
+  catch(err){toast('このファイルは読み込めませんでした')}finally{e.target.value=''}});
+$('wipe').onclick=()=>{if(confirm('すべての記録と設定を削除します。よろしいですか？')&&confirm('元に戻せません。本当に削除しますか？')){S=defaults();save();cur=today();renderAll();renderSettings();toast('削除しました')}};
+
+// URLパラメータからの取り込み（?rest=…&active=…）
+(function(){const q=decodeURIComponent(location.search+' '+location.hash);
+  if(/(rest|active|weight)=/.test(q)){applyImport(parseImport(q.replace(/[?&#]/g,' ')));history.replaceState(null,'',location.pathname)}})();
+
+renderToday();
+if('serviceWorker'in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

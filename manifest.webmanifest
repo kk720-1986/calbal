@@ -1,0 +1,16 @@
+{
+  "name": "カロリー収支",
+  "short_name": "カロリー収支",
+  "description": "安静時・アクティブの消費と、型の食事＋追加の摂取から、日々のカロリー収支を追いかける道具",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f5",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
